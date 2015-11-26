@@ -16,7 +16,7 @@ def execute_function(f):
     root.after(200, f)
 
 
-## BT_FUNCTIONS
+## BT_FUNCTIONS AND LOGIC
 
 def f_clear(text_widget):
     text_widget.delete("1.0", END)
@@ -61,30 +61,62 @@ def error_message(text_widget, message):
     text_widget.insert("1.0", "ERROR: " + message)
 
 
-def f_view(spinbox, entry_path, entry_break_char, text, progress_bar=None):
-    text.delete("1.0", END)
+def read_lines_in_chunks(in_stream, break_char):
+    previous_result = ""
+    while True:
+        data = in_stream.read(1024)
+        if not data:
+            break
+        last_index = 0
+        for i in range(0, len(data)):
+            if data[i] == break_char:
+                yield previous_result + data[last_index:i + 1]
+                previous_result = ""
+                last_index = i + 1
+        previous_result += data[last_index:]
+
+
+def decide_break_char(text):
+    if len(text) == 0:
+        return "\n"
+    elif len(text) == 1:
+        return text
+    elif text == "\\n":
+        return "\n"
+    elif text == "\\t":
+        return "\t"
+    elif text == "\\r":
+        return "\r"
+    else:
+        return "\n"  # This shuold not happen
+
+
+
+def f_view(spinbox, entry_path, entry_break_char, text_widget, progress_bar=None):
+    text_widget.delete("1.0", END)
 
     if not is_valid_path(entry_path.get()):
-        error_message(text, "The specified path is not valid or points to a not accessible file")
+        error_message(text_widget, "The specified path is not valid or points to a not accessible file")
         return
     if not is_valid_lines(spinbox.get()):
-        error_message(text, "Invalid number of lines")
+        error_message(text_widget, "Invalid number of lines")
         return
     if not is_valid_break_char(entry_break_char.get()):
-        error_message(text, "Invalid line separator. Use a single char (you can scape it with '\\')")
+        error_message(text_widget, "Invalid line separator. Use a single char (you can scape it with '\\')")
         return
 
     n_lines = int(spinbox.get())
     counter = 0
     result = ""
+    break_char = decide_break_char(entry_break_char.get())
     with open(entry_path.get(), "r") as in_stream:
-        for line in in_stream:
+        for line in read_lines_in_chunks(in_stream, break_char):
             if counter >= n_lines:
                 break
             counter += 1
             result += line
 
-    text.insert(1.0, result)
+    text_widget.insert(1.0, result)
 
 
 
