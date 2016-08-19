@@ -9,7 +9,7 @@ from tkFileDialog import *
 
 root = Tk()
 root.resizable(0, 0)
-root.geometry("680x470")
+root.geometry("830x470")
 
 
 def execute_function(f):
@@ -36,6 +36,18 @@ def is_valid_lines(text):
         return False
     except:
         return False
+
+def is_valid_start_line(text):
+    if text in [None, ""]:
+        return True
+    try:
+        number = int(text)
+        if number >= 0:
+            return True
+        return False
+    except:
+        return False
+
 
 
 def is_valid_path(text):
@@ -101,20 +113,26 @@ def f_view(spinbox, entry_path, entry_break_char, text_widget, progress_bar=None
     if not is_valid_lines(spinbox.get()):
         error_message(text_widget, "Invalid number of lines")
         return
+    if not is_valid_start_line(spin_start_line.get()):
+        error_message(text_widget, "Invalid start line")
+        return
     if not is_valid_break_char(entry_break_char.get()):
         error_message(text_widget, "Invalid line separator. Use a single char (you can scape it with '\\')")
         return
 
     n_lines = int(spinbox.get())
+    start_line = int(spin_start_line.get())
     counter = 0
     result = ""
+    target_line = n_lines + start_line
     break_char = decide_break_char(entry_break_char.get())
     with open(entry_path.get(), "r") as in_stream:
         for line in read_lines_in_chunks(in_stream, break_char):
-            if counter >= n_lines:
+            if counter >= target_line:
                 break
+            if counter >= start_line:
+                result += line
             counter += 1
-            result += line
 
     text_widget.insert(1.0, result)
 
@@ -150,7 +168,7 @@ label_path.pack(side=LEFT)
 
 button_path = Button(frame_path, text="File...", command=lambda: execute_function(f_path(entry_path)))
 
-entry_path = Entry(frame_path, width=100)
+entry_path = Entry(frame_path, width=125)
 entry_path.pack(side=LEFT, fill=X)
 button_path.pack(side=LEFT)
 
@@ -161,7 +179,7 @@ frame_path.pack(side=TOP, fill=X)
 
 frame_controls = Frame(root)
 
-#Spinner
+#Spinner  N LINES
 string_label_spin = StringVar()
 string_label_spin.set("Number of lines: ")
 label_spin = Label(frame_controls, textvar=string_label_spin)
@@ -169,7 +187,16 @@ label_spin.pack(side=LEFT)
 spinner = Spinbox(frame_controls, from_=0, to=1000000, width=10)
 spinner.pack(side=LEFT)
 
+#Spiner Start line
+string_label_start = StringVar()
+string_label_start.set("Start line (def. 0): ")
+label_start = Label(frame_controls, textvar=string_label_start)
+label_start.pack(side=LEFT)
+spin_start_line = Spinbox(frame_controls, from_=0, to=10000000, width=10)
+spin_start_line.pack(side=LEFT)
+
 frame_controls.pack(side=TOP, fill=BOTH)
+
 
 # bt clear and view
 
